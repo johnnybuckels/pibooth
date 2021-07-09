@@ -1,7 +1,7 @@
 import tkinter as tk
 import pynput as pnp
 
-from datetime import  datetime 
+from datetime import datetime
 from picamera import PiCamera
 from picamera.array import PiRGBArray
 from PIL import Image, ImageTk as itk
@@ -10,8 +10,8 @@ from time import sleep, time
 from threading import Thread, ThreadError
 from collections import deque
 
-class Gui(tk.Tk):
 
+class Gui(tk.Tk):
     # Unbedingt anpassen
     TARGET_DIR_PATH = "/home/pi/Pictures"
 
@@ -27,14 +27,15 @@ class Gui(tk.Tk):
     KEYCODE_YES = KeyCode.from_char("1")
     KEYCODE_NO = KeyCode.from_char("0")
     DUMMY_IMAGE = Image.new(mode="RGBA", size=PREVIEW_RES, color="red")
-    CAMERA_FPS =8
-    DELAY = 1.0/CAMERA_FPS
+    CAMERA_FPS = 10
+    DELAY = 1.0 / CAMERA_FPS
     MAX_QUEUE_LENGTH = 10
+    ROTATION = 90
 
     # Label Texte
     INIT_STRING = "\nDrücke eine beliebige Taste, um PiBooth zu starten"
     WELCOME_STRING = "Willkommen in der PiBooth!\n Drücke eine Taste, um ein Bild zu machen."
-    CHOICE_STRING = "Zufrieden?\nBestätige mit GRÜN oder kehre zurück mit ROT, um ein neues Bild zu machen."
+    CHOICE_STRING = "Zufrieden?\nBestätigen: GRÜN, Zurück: ROT"
     SAVING_STRING = "\nSpeichere..."
     KLICK = "\nKlick!"
 
@@ -59,10 +60,10 @@ class Gui(tk.Tk):
         self.yes_action = None
         self.no_action = None
         # receiving images
-        self.camera = PiCamera(framerate=Gui.CAMERA_FPS, resolution= Gui.CAPTURE_RES)
+        self.camera = PiCamera(framerate=Gui.CAMERA_FPS, resolution=Gui.CAPTURE_RES, rotation=Gui.ROTATION)
         self.preview_target = PiRGBArray(self.camera, size=Gui.PREVIEW_RES)
         self.snapshot_target = PiRGBArray(self.camera, size=Gui.CAPTURE_RES)
-        self.frame_queue = deque();  # liste von PiRGBArray.array objekten
+        self.frame_queue = deque()  # liste von PiRGBArray.array objekten
         self.is_cam_stream_running = True  # stoppt den receive-thread, falls nötig
         self.continue_preview = True  # steuert, ob ein cam stream gerade angezeigt werden soll
         self.image_filler_thread = None
@@ -74,7 +75,7 @@ class Gui(tk.Tk):
         self.main_frame.pack(fill=tk.BOTH, expand=1)
         self.label_title.pack(pady=(Gui.LABEL_TOP_MARGIN, 0))
         self.canvas.pack(fill=tk.BOTH, expand=1, anchor=tk.CENTER, pady=(0, Gui.CANVAS_BOTTOM_MARGIN))
-    
+
     def mainloop(self):
         self.start_app_functions()
         tk.Tk.mainloop(self)
@@ -148,20 +149,20 @@ class Gui(tk.Tk):
         if self.snapshot_target.array is not None:
             img = itk.PhotoImage(Image.fromarray(self.snapshot_target.array).resize(Gui.PREVIEW_RES))
             self.canvas.create_image(
-                    self.canvas.winfo_width()/2, 
-                    self.canvas.winfo_height()/2, 
-                    image=img, 
-                    anchor=tk.CENTER
-                    )
+                self.canvas.winfo_width() / 2,
+                self.canvas.winfo_height() / 2,
+                image=img,
+                anchor=tk.CENTER
+            )
             self.snapshot_image_reference.append(img)  # speichere referenz
         else:
             print("No snapshot available")
             self.canvas.create_image(
-                    self.canvas.winfo_width()/2, 
-                    self.canvas.winfo_height()/2, 
-                    image=itk.PhotoImage(Gui.DUMMY_IMAGE), 
-                    anchor=tk.CENTER
-                    )
+                self.canvas.winfo_width() / 2,
+                self.canvas.winfo_height() / 2,
+                image=itk.PhotoImage(Gui.DUMMY_IMAGE),
+                anchor=tk.CENTER
+            )
 
     def save_current_picture(self):
         self.label_title.configure(text=Gui.SAVING_STRING)
@@ -170,15 +171,14 @@ class Gui(tk.Tk):
         Image.fromarray(self.snapshot_target.array).save(fp=file_name, quality=100)
 
     def start_preview(self):
-        if ((self.preview_thread and self.preview_thread.is_alive()) or 
-            (self.image_filler_thread and self.image_filler_thread.is_alive())):
+        if ((self.preview_thread and self.preview_thread.is_alive()) or
+                (self.image_filler_thread and self.image_filler_thread.is_alive())):
             raise ThreadError("Trying to start a new preview although there is still a preview running")
         self.snapshot_image_reference.clear()  # Lösche alle snapshot previews
         self.image_filler_thread = Thread(target=self.fill_frames_continuously, name="camera_capturer", daemon=True)
         self.image_filler_thread.start()
         self.preview_thread = Thread(target=self.preview, name="preview_thread", daemon=True)
         self.preview_thread.start()
-
 
     def stop_preview(self):
         self.continue_preview = False
@@ -192,7 +192,8 @@ class Gui(tk.Tk):
         Diese Methode sollte in einem separaten Thread laufen.
         """
         # setze preview camera einstellungen
-        for _ in self.camera.capture_continuous(self.preview_target, format="rgb", use_video_port=True, resize=Gui.PREVIEW_RES):
+        for _ in self.camera.capture_continuous(self.preview_target, format="rgb", use_video_port=True,
+                                                resize=Gui.PREVIEW_RES):
             self.preview_target.truncate()
             self.preview_target.seek(0)
             if len(self.frame_queue) > Gui.MAX_QUEUE_LENGTH:
@@ -221,15 +222,15 @@ class Gui(tk.Tk):
                 old_image = new_image
                 new_image = itk.PhotoImage(pil_img)
                 self.canvas.create_image(
-                    self.canvas.winfo_width()/2, 
-                    self.canvas.winfo_height()/2, 
-                    image=new_image, 
+                    self.canvas.winfo_width() / 2,
+                    self.canvas.winfo_height() / 2,
+                    image=new_image,
                     anchor=tk.CENTER
-                    )
+                )
             elapsed_time = time() - start_time
-            sleep(max(0, Gui.DELAY-elapsed_time))
+            sleep(max(0., Gui.DELAY - elapsed_time))
         print("stopping preview")
-        
+
     # ---------- misc
 
     def on_key_press(self, key):
