@@ -33,7 +33,7 @@ class Gui(tk.Tk):
     ROTATION = 90
 
     # Label Texte
-    INIT_STRING = "\nDrücke eine beliebige Taste, um PiBooth zu starten"
+    INIT_STRING = "Drücke eine beliebige Taste, um PiBooth zu starten\nSpeicherort: " + TARGET_DIR_PATH
     WELCOME_STRING = "Willkommen in der PiBooth!\n Drücke eine Taste, um ein Bild zu machen."
     CHOICE_STRING = "Zufrieden?\nBestätigen: GRÜN, Zurück: ROT"
     SAVING_STRING = "\nSpeichere..."
