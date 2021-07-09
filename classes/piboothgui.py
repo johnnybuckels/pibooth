@@ -1,11 +1,11 @@
 import tkinter as tk
-import pynput as pnp
 
 from datetime import datetime
 from picamera import PiCamera
 from picamera.array import PiRGBArray
 from PIL import Image, ImageTk as itk
-from pynput.keyboard import KeyCode
+from pynput.keyboard import KeyCode, Listener
+from pynput.mouse import Controller
 from time import sleep, time
 from threading import Thread, ThreadError
 from collections import deque
@@ -55,12 +55,13 @@ class Gui(tk.Tk):
         # keyboard
         self.yes_key = Gui.KEYCODE_YES
         self.no_key = Gui.KEYCODE_NO
-        self.keyboard_listener = pnp.keyboard.Listener(on_press=self.on_key_press)
+        self.keyboard_listener = Listener(on_press=self.on_key_press)
         # actions
         self.yes_action = None
         self.no_action = None
         # receiving images
-        self.camera = PiCamera(framerate=Gui.CAMERA_FPS, resolution=Gui.CAPTURE_RES, rotation=Gui.ROTATION)
+        self.camera = PiCamera(framerate=Gui.CAMERA_FPS, resolution=Gui.CAPTURE_RES)
+        self.camera.rotation = Gui.ROTATION
         self.preview_target = PiRGBArray(self.camera, size=Gui.PREVIEW_RES)
         self.snapshot_target = PiRGBArray(self.camera, size=Gui.CAPTURE_RES)
         self.frame_queue = deque()  # liste von PiRGBArray.array objekten
@@ -69,6 +70,8 @@ class Gui(tk.Tk):
         self.image_filler_thread = None
         self.preview_thread = None
         # misc
+        mouse_controller = Controller()
+        mouse_controller.position = (0, 0)
         self.full_screen_state = True
         self.snapshot_image_reference = []  # Referenz auf das snapshot bild, das auf dem canvas gezeigt wird
         # ### arrange widgets
